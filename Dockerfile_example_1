@@ -1,0 +1,22 @@
+# time docker build --no-cache . -t docker_edk2_multi_stage_build_example:latest -f Dockerfile_example_1
+FROM ubuntu:20.04
+SHELL ["/bin/bash", "-c"]
+ENV TZ=Asia/Taipei
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN set -ex && apt-get update && \
+      apt-get install -y git acpica-tools build-essential uuid-dev \
+        python3.8 python3-distutils python3-pip bc gawk git wget alien && \
+      apt-get autoremove --purge && \
+      apt-get -y clean && \
+      rm -rf /var/lib/apt/lists/*
+RUN git clone --recurse-submodule https://github.com/tianocore/edk2.git
+WORKDIR /edk2
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 10
+RUN wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/linux/nasm-2.15.05-0.fc31.x86_64.rpm \
+      -O/tmp/nasm-2.15.05-0.fc31.x86_64.rpm
+RUN alien /tmp/nasm-2.15.05-0.fc31.x86_64.rpm -i
+RUN make -C BaseTools
+RUN set -ex && git checkout edk2-stable202208 && \
+      source edksetup.sh && \
+      build -a X64 -t GCC5 -p ShellPkg/ShellPkg.dsc

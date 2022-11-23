@@ -1,0 +1,43 @@
+# time DOCKER_BUILDKIT=1 docker build --no-cache -t docker_edk2_multi_stage_build_example:latest . -f Dockerfile_example_2
+
+FROM alpine:3.16.3 AS alpine_base
+RUN apk add --update git
+
+FROM alpine:3.16.3 AS NASM
+RUN apk add --update wget
+RUN wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/linux/nasm-2.15.05-0.fc31.x86_64.rpm
+
+FROM alpine_base AS tianocore_source_code
+# RUN git clone --recurse-submodule https://github.com/tianocore/edk2.git
+RUN set -ex && \
+      git clone https://github.com/tianocore/edk2.git && \
+      cd edk2 && \
+      git submodule init && \
+      git submodule update BaseTools/Source/C/BrotliCompress/brotli && \
+      git submodule update MdeModulePkg/Library/BrotliCustomDecompressLib/brotli && \
+      git checkout edk2-stable202208
+
+FROM ubuntu:20.04 AS ubuntu_base
+# Change default shell to bash to avoid cannot use command source problem
+SHELL ["/bin/bash", "-c"]
+ENV TZ=Asia/Taipei
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN set -ex && apt-get update && \
+      apt-get install -y acpica-tools build-essential uuid-dev \
+        python3.8 python3-distutils python3-pip bc gawk wget alien && \
+      apt-get autoremove --purge && \
+      apt-get -y clean && \
+      rm -rf /var/lib/apt/lists/*
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 10
+
+COPY --from=NASM /nasm-2.15.05-0.fc31.x86_64.rpm /tmp/nasm-2.15.05-0.fc31.x86_64.rpm
+RUN alien /tmp/nasm-2.15.05-0.fc31.x86_64.rpm -i
+
+FROM ubuntu_base AS SHELLPKG
+COPY --from=tianocore_source_code edk2/ edk2/
+WORKDIR /edk2
+RUN make -C BaseTools
+RUN set -ex && \
+      source edksetup.sh && \
+      build -a X64 -t GCC5 -p ShellPkg/ShellPkg.dsc
