@@ -4,7 +4,7 @@
 ## Dockerfile_example_1 - Single build
 
 ```bash
-time docker build --no-cache . -t docker_edk2_multi_stage_build_example:latest \
+time docker build --no-cache . -t docker_edk2_multi_stage_build_example1:latest \
   -f Dockerfile_example_1
 ```
 
@@ -20,7 +20,7 @@ sys     0m0.273s
 
 ```bash
 time DOCKER_BUILDKIT=1 docker build --no-cache \
-  -t docker_edk2_multi_stage_build_example:latest . -f Dockerfile_example_2
+  -t docker_edk2_multi_stage_build_example2:latest . -f Dockerfile_example_2
 ```
 
 Result

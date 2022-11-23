@@ -1,0 +1,15 @@
+name: ci
+
+on: push
+
+jobs:
+  docker:
+    runs-on: ubuntu-20.04
+    steps:
+      -
+        name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: false
+          file: Dockerfile_example_1
+          tags: docker_edk2_multi_stage_build_example1:latest
