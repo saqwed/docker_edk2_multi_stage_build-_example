@@ -17,6 +17,6 @@ RUN wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/linux/nasm-2.15.05-0
       -O/tmp/nasm-2.15.05-0.fc31.x86_64.rpm
 RUN alien /tmp/nasm-2.15.05-0.fc31.x86_64.rpm -i
 RUN make -C BaseTools
-RUN set -ex && git checkout edk2-stable202208 && \
+RUN set -ex && git checkout edk2-stable202211 && \
       source edksetup.sh && \
       build -a X64 -t GCC5 -p ShellPkg/ShellPkg.dsc
