@@ -32,10 +32,14 @@ RUN set -ex && apt-get update && \
 COPY --from=NASM /nasm-2.15.05-0.fc31.x86_64.rpm /tmp/nasm-2.15.05-0.fc31.x86_64.rpm
 RUN alien /tmp/nasm-2.15.05-0.fc31.x86_64.rpm -i
 
-FROM debian_base AS SHELLPKG
+FROM debian_base AS shellpkg
 COPY --from=tianocore_source_code edk2/ edk2/
 WORKDIR /edk2
 RUN make -C BaseTools
 RUN set -ex && \
       source edksetup.sh && \
       build -a X64 -t GCC5 -p ShellPkg/ShellPkg.dsc
+
+FROM alpine:3.16.3 AS final
+COPY --from=shellpkg edk2/Build/Shell/DEBUG_GCC5/X64/Shell_7C04A583-9E3E-4f1c-AD65-E05268D0B4D1.efi /Build/Shell_7C04A583-9E3E-4f1c-AD65-E05268D0B4D1.efi
+COPY --from=shellpkg edk2/Build/Shell/DEBUG_GCC5/X64/Shell_EA4BB293-2D7F-4456-A681-1F22F42CD0BC.efi  /Build/Shell_EA4BB293-2D7F-4456-A681-1F22F42CD0BC.efi 
